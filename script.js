@@ -1,77 +1,104 @@
+function playSoundWin () {
+	let geluid = new Audio('sounds/win.mp3');
+	geluid.play();
+}
 
-let dealerSum = 0;
-let yourSum = 0;
+function playSoundLose () {
+	let geluid = new Audio('sounds/lose.mp3');
+	geluid.play();
+}
 
-let dealerAceCount = 0;
-let yourAceCount = 0; 
-
-let hidden;
-let deck;
-
-let canHit = true; //allows the player (you) to draw while yourSum <= 21
-
+// refreshed de pagina om opnieuw te beginnen
 window.onload = function() {
     buildDeck();
     shuffleDeck();
     startGame();
 
     document.getElementById("restart").addEventListener("click", function() {
-        location.reload(); // Refresh the page when the restart button is clicked
+        location.reload(); 
     });
 }
 
-function buildDeck() {
-    let values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-    let types = ["C", "D", "H", "S"];
-    deck = [];
-
-    for (let i = 0; i < types.length; i++) {
-        for (let j = 0; j < values.length; j++) {
-            deck.push(values[j] + "-" + types[i]); //A-C -> K-C, A-D -> K-D
-        }
-    }
-    // console.log(deck);
+function startTimer() {
+    timer = setTimeout(function() {
+        alert("Bent u nog steeds aan het spelen?");
+    }, 5 * 60 * 1000); // 5 minuten in milliseconden
 }
 
+function resetTimer() {
+    clearTimeout(timer);
+    startTimer();
+}
+
+//variabelen
+let dealerAantal = 0; //dealer aantal kaarten
+
+let aantal = 0; // speler aantal kaarten
+
+let dealerAceAantal = 0; // dealer aantal ace
+
+let aantalAce = 0; //speler aantal ace
+
+let hidden; // hidden kaart dealer
+
+let deck; // deck
+
+let timer; // timer
+
+let canHit = true; //kaarten pakken tot 21
+
+// maakt alle soorten kaarten aan
+function buildDeck() {
+    let types = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+    let soort = ["C", "D", "H", "S"];
+    deck = [];
+
+    for (let i = 0; i < soort.length; i++) {
+        for (let j = 0; j < types.length; j++) {
+            deck.push(types[j] + "-" + soort[i]); 
+        }
+    }
+}
+
+// schud alle kaarten
 function shuffleDeck() {
-    for (let i = 0; i < deck.length; i++) {
-        let j = Math.floor(Math.random() * deck.length); // (0-1) * 52 => (0-51.9999)
-        let temp = deck[i];
-        deck[i] = deck[j];
-        deck[j] = temp;
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
     }
     console.log(deck);
 }
 
+
 function startGame() {
+    startTimer();
+    //laat dealer pakken tot 17
     hidden = deck.pop();
-    dealerSum += getValue(hidden);
-    dealerAceCount += checkAce(hidden);
-    // console.log(hidden);
-    // console.log(dealerSum);
-    while (dealerSum < 17) {
-        //<img src="./cards/4-C.png">
+    dealerAantal += getValue(hidden);
+    dealerAceAantal += checkAce(hidden);
+    while (dealerAantal < 17) {
         let cardImg = document.createElement("img");
         let card = deck.pop();
         cardImg.src = "./cards/" + card + ".png";
-        dealerSum += getValue(card);
-        dealerAceCount += checkAce(card);
-        document.getElementById("dealer-cards").append(cardImg);
+        dealerAantal += getValue(card);
+        dealerAceAantal += checkAce(card);
+        document.getElementById("dealer-kaarten").append(cardImg);
     }
-    console.log(dealerSum);
-    //document.getElementById("dealer-sum").innerText = dealerSum;
 
+    console.log(dealerAantal);
+
+    // geeft speler 2 kaarten
     for (let i = 0; i < 2; i++) {
         let cardImg = document.createElement("img");
         let card = deck.pop();
         cardImg.src = "./cards/" + card + ".png";
-        yourSum += getValue(card);
-        yourAceCount += checkAce(card);
-        document.getElementById("your-cards").append(cardImg);
+        aantal += getValue(card);
+        aantalAce += checkAce(card);
+        document.getElementById("speler-kaarten").append(cardImg);
     }
 
-    document.getElementById("your-sum").innerText = yourSum;
-    console.log(yourSum);
+    document.getElementById("speler-aantal").innerText = aantal;
+    console.log(aantal);
 
     document.getElementById("hit").addEventListener("click", hit);
     document.getElementById("stay").addEventListener("click", stay);
@@ -79,55 +106,72 @@ function startGame() {
 }
 
 function hit() {
+    //kijkt of speler nog kan pakken
     if (!canHit) {
         return;
     }
-
+    // geeft speler een extra kaart
     let cardImg = document.createElement("img");
     let card = deck.pop();
     cardImg.src = "./cards/" + card + ".png";
-    yourSum += getValue(card);
-    yourAceCount += checkAce(card);
-    document.getElementById("your-cards").append(cardImg);
+    aantal += getValue(card);
+    aantalAce += checkAce(card);
+    document.getElementById("speler-kaarten").append(cardImg);
 
-    document.getElementById("your-sum").innerText = yourSum;
-
-    if (reduceAce(yourSum, yourAceCount) > 21) {
+    // Update spelerScore en weergave
+    aantal = reduceAce(aantal, aantalAce);
+    document.getElementById("speler-aantal").innerText = aantal;
+    
+    //eindigt game als speler 21 heeft
+    if (aantal > 21) {
         canHit = false;
-        endGame(); // Automatically end the game if the player's score is over 21
+        endGame();
     }
+    resetTimer();
 }
 
 function stay() {
-    dealerSum = reduceAce(dealerSum, dealerAceCount);
-    yourSum = reduceAce(yourSum, yourAceCount);
+    // zorgt ervoor als speler ace heeft en boven 21 zit ace een 1 word inplaats van 11
+    dealerAantal = reduceAce(dealerAantal, dealerAceAantal);
+    aantal = reduceAce(aantal, aantalAce);
 
+    //laat dealer hidden kaart zien
     canHit = false;
     document.getElementById("hidden").src = "./cards/" + hidden + ".png";
-
+    // als je boven de 21 zit
     let message = "";
-    if (yourSum > 21) {
+    if (aantal > 21) {
         message = "You Lose!";
+        playSoundLose();
     }
-    else if (dealerSum > 21) {
+    // als dealer boven de 21 zit
+    else if (dealerAantal > 21) {
         message = "You win!";
+        playSoundWin();
     }
-    //both you and dealer <= 21
-    else if (yourSum == dealerSum) {
+    // beide zelfde aantal
+    else if (aantal == dealerAantal) {
         message = "Tie!";
     }
-    else if (yourSum > dealerSum) {
+    // als je meer dan dealer hebt
+    else if (aantal > dealerAantal) {
         message = "You Win!";
+        playSoundWin();
     }
-    else if (yourSum < dealerSum) {
+    // als dealer meer heeft
+    else if (aantal < dealerAantal) {
         message = "You Lose!";
+        playSoundLose();
     }
 
-    document.getElementById("dealer-sum").innerText = dealerSum;
-    document.getElementById("your-sum").innerText = yourSum;
+    document.getElementById("dealer-aantal").innerText = dealerAantal;
+    document.getElementById("speler-aantal").innerText = aantal;
     document.getElementById("results").innerText = message;
+    resetTimer();
 }
 
+
+// kijkt of je een A J Q K hebt
 function getValue(card) {
     let data = card.split("-"); // "4-C" -> ["4", "C"]
     let value = data[0];
@@ -140,7 +184,7 @@ function getValue(card) {
     }
     return parseInt(value);
 }
-
+// kijkt of je een ACE hebt
 function checkAce(card) {
     if (card[0] == "A") {
         return 1;
@@ -148,6 +192,7 @@ function checkAce(card) {
     return 0;
 }
 
+// zorgt ervoor dat je ace 1 word als je boven de 21 zit
 function reduceAce(playerSum, playerAceCount) {
     while (playerSum > 21 && playerAceCount > 0) {
         playerSum -= 10;
@@ -156,18 +201,20 @@ function reduceAce(playerSum, playerAceCount) {
     return playerSum;
 }
 
+// als speler 21 heeft
 function endGame() {
-    dealerSum = reduceAce(dealerSum, dealerAceCount);
+    dealerAantal = reduceAce(dealerAantal, dealerAceAantal);
     document.getElementById("hidden").src = "./cards/" + hidden + ".png";
 
     let message = "";
-    if (dealerSum <= 21) {
+    if (dealerAantal <= 21 || aantal > 21) {
         message = "You Lose!";
     } else {
         message = "Both players busted!";
     }
 
-    document.getElementById("dealer-sum").innerText = dealerSum;
+    document.getElementById("dealer-aantal").innerText = dealerAantal;
+    document.getElementById("speler-aantal").innerText = aantal;
     document.getElementById("results").innerText = message;
     gameStarted = false;
 }
