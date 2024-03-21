@@ -1,0 +1,3 @@
+idee/kaarten: 
+
+https://github.com/ImKennyYip/black-jack/blob/master/blackjack.js
