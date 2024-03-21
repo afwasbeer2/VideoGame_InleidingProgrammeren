@@ -193,12 +193,12 @@ function checkAce(card) {
 }
 
 // zorgt ervoor dat je ace 1 word als je boven de 21 zit
-function reduceAce(playerSum, playerAceCount) {
-    while (playerSum > 21 && playerAceCount > 0) {
-        playerSum -= 10;
-        playerAceCount -= 1;
+function reduceAce(playerAantal, playerAceAantal) {
+    while (playerAantal > 21 && playerAceAantal > 0) {
+        playerAantal -= 10;
+        playerAceAantal -= 1;
     }
-    return playerSum;
+    return playerAantal;
 }
 
 // als speler 21 heeft
