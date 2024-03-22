@@ -1,26 +1,28 @@
-function playSoundWin () {
-	let geluid = new Audio('sounds/win.mp3');
-	geluid.play();
+// speelt een geluid als je wint
+function playSoundWin() {
+    let geluid = new Audio('sounds/win.mp3');
+    geluid.play();
 }
-
-function playSoundLose () {
-	let geluid = new Audio('sounds/lose.mp3');
-	geluid.play();
+// speelt een geluid als je verliest
+function playSoundLose() {
+    let geluid = new Audio('sounds/lose.mp3');
+    geluid.play();
 }
 
 // refreshed de pagina om opnieuw te beginnen
-window.onload = function() {
+
+window.onload = function () {
     buildDeck();
     shuffleDeck();
     startGame();
 
-    document.getElementById("restart").addEventListener("click", function() {
-        location.reload(); 
+    document.getElementById("restart").addEventListener("click", function () {
+        location.reload();
     });
 }
-
+// start een timer van 5 minuten en geeft uit eindelijk een melding
 function startTimer() {
-    timer = setTimeout(function() {
+    timer = setTimeout(function () {
         alert("Bent u nog steeds aan het spelen?");
     }, 5 * 60 * 1000); // 5 minuten in milliseconden
 }
@@ -48,6 +50,7 @@ let timer; // timer
 let canHit = true; //kaarten pakken tot 21
 
 // maakt alle soorten kaarten aan
+
 function buildDeck() {
     let types = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
     let soort = ["C", "D", "H", "S"];
@@ -55,7 +58,7 @@ function buildDeck() {
 
     for (let i = 0; i < soort.length; i++) {
         for (let j = 0; j < types.length; j++) {
-            deck.push(types[j] + "-" + soort[i]); 
+            deck.push(types[j] + "-" + soort[i]);
         }
     }
 }
@@ -69,7 +72,26 @@ function shuffleDeck() {
     console.log(deck);
 }
 
+// functie om player kaart aan te maken
+function dealPlayerCard() {
+    let cardImg = document.createElement("img");
+    let card = deck.pop();
+    cardImg.src = "./cards/" + card + ".png";
+    aantal += getValue(card);
+    aantalAce += checkAce(card);
+    document.getElementById("speler-kaarten").append(cardImg);
+}
 
+// functie om dealer kaart aan te maken
+function dealDealerCard() {
+    let cardImg = document.createElement("img");
+    let card = deck.pop();
+    cardImg.src = "./cards/" + card + ".png";
+    dealerAantal += getValue(card);
+    dealerAceAantal += checkAce(card);
+    document.getElementById("dealer-kaarten").append(cardImg);
+}
+// start het spel
 function startGame() {
     startTimer();
     //laat dealer pakken tot 17
@@ -77,26 +99,16 @@ function startGame() {
     dealerAantal += getValue(hidden);
     dealerAceAantal += checkAce(hidden);
     while (dealerAantal < 17) {
-        let cardImg = document.createElement("img");
-        let card = deck.pop();
-        cardImg.src = "./cards/" + card + ".png";
-        dealerAantal += getValue(card);
-        dealerAceAantal += checkAce(card);
-        document.getElementById("dealer-kaarten").append(cardImg);
+        dealDealerCard();
     }
 
     console.log(dealerAantal);
 
     // geeft speler 2 kaarten
     for (let i = 0; i < 2; i++) {
-        let cardImg = document.createElement("img");
-        let card = deck.pop();
-        cardImg.src = "./cards/" + card + ".png";
-        aantal += getValue(card);
-        aantalAce += checkAce(card);
-        document.getElementById("speler-kaarten").append(cardImg);
+        dealPlayerCard();
     }
-
+    // laat speeler aantal zien
     document.getElementById("speler-aantal").innerText = aantal;
     console.log(aantal);
 
@@ -105,71 +117,70 @@ function startGame() {
 
 }
 
+// functie om speler kaart te pakken
 function hit() {
-    //kijkt of speler nog kan pakken
+    // Controleer of de speler kan blijven pakken
     if (!canHit) {
         return;
     }
-    // geeft speler een extra kaart
-    let cardImg = document.createElement("img");
-    let card = deck.pop();
-    cardImg.src = "./cards/" + card + ".png";
-    aantal += getValue(card);
-    aantalAce += checkAce(card);
-    document.getElementById("speler-kaarten").append(cardImg);
 
-    // Update spelerScore en weergave
+    // Geef de speler een extra kaart
+    dealPlayerCard();
+
+    // Update de spelerScore en weergave
     aantal = reduceAce(aantal, aantalAce);
     document.getElementById("speler-aantal").innerText = aantal;
-    
-    //eindigt game als speler 21 heeft
-    if (aantal > 21) {
-        canHit = false;
+
+    // Als de speler een Aas heeft en het totale aantal gelijk aan of minder dan 21 is, laat ze dan doorgaan met pakken
+    if (aantalAce > 0 && aantal <= 21) {
+        // Update de spelerAceAantal
+        aantalAce--;
+        // Blijf de speler toestaan om te pakken
+        return;
+    }
+
+    // Eindig het spel als de speler boven 21 gaat of als ze geen Aas meer hebben
+    canHit = false;
+    if (aantal > 21 || aantalAce === 0) {
         endGame();
     }
+
     resetTimer();
 }
 
+// functie als speler geen kaart meer wilt pakken
 function stay() {
-    // zorgt ervoor als speler ace heeft en boven 21 zit ace een 1 word inplaats van 11
-    dealerAantal = reduceAce(dealerAantal, dealerAceAantal);
-    aantal = reduceAce(aantal, aantalAce);
+    // Zorg ervoor dat de dealer kaarten blijft trekken tot 17
+    while (dealerAantal < 17) {
+        dealDealerCard();
+    }
 
-    //laat dealer hidden kaart zien
-    canHit = false;
-    document.getElementById("hidden").src = "./cards/" + hidden + ".png";
-    // als je boven de 21 zit
+    // Update dealerScore en weergave
+    dealerAantal = reduceAce(dealerAantal, dealerAceAantal);
+    document.getElementById("dealer-aantal").innerText = dealerAantal;
+
+    // Vergelijk de scores om te bepalen wie er wint
     let message = "";
     if (aantal > 21) {
-        message = "You Lose!";
+        message = "Verloren!";
         playSoundLose();
-    }
-    // als dealer boven de 21 zit
-    else if (dealerAantal > 21) {
-        message = "You win!";
+    } else if (dealerAantal > 21) {
+        message = "Gewonnen!";
         playSoundWin();
-    }
-    // beide zelfde aantal
-    else if (aantal == dealerAantal) {
-        message = "Tie!";
-    }
-    // als je meer dan dealer hebt
-    else if (aantal > dealerAantal) {
-        message = "You Win!";
+    } else if (aantal == dealerAantal) {
+        message = "gelijkspel!";
+    } else if (aantal > dealerAantal) {
+        message = "Gewonnen!";
         playSoundWin();
-    }
-    // als dealer meer heeft
-    else if (aantal < dealerAantal) {
-        message = "You Lose!";
+    } else if (aantal < dealerAantal) {
+        message = "Verloren!";
         playSoundLose();
     }
 
-    document.getElementById("dealer-aantal").innerText = dealerAantal;
-    document.getElementById("speler-aantal").innerText = aantal;
+    // Toon het bericht en stop de timer
     document.getElementById("results").innerText = message;
     resetTimer();
 }
-
 
 // kijkt of je een A J Q K hebt
 function getValue(card) {
@@ -184,6 +195,7 @@ function getValue(card) {
     }
     return parseInt(value);
 }
+
 // kijkt of je een ACE hebt
 function checkAce(card) {
     if (card[0] == "A") {
