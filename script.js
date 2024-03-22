@@ -91,6 +91,7 @@ function dealDealerCard() {
     dealerAceAantal += checkAce(card);
     document.getElementById("dealer-kaarten").append(cardImg);
 }
+
 // start het spel
 function startGame() {
     startTimer();
