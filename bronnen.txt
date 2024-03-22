@@ -1,5 +1,6 @@
 idee/kaarten: 
 
+https://www.youtube.com/watch?v=bMYCWccL-3U
 https://github.com/ImKennyYip/black-jack/blob/master/blackjack.js
 
 geluid:
