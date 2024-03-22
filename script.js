@@ -1,28 +1,28 @@
 // speelt een geluid als je wint
-function playSoundWin() {
-    let geluid = new Audio('sounds/win.mp3');
-    geluid.play();
+function playSoundWin () {
+	let geluid = new Audio('sounds/win.mp3');
+	geluid.play();
 }
 // speelt een geluid als je verliest
-function playSoundLose() {
-    let geluid = new Audio('sounds/lose.mp3');
-    geluid.play();
+function playSoundLose () {
+	let geluid = new Audio('sounds/lose.mp3');
+	geluid.play();
 }
 
 // refreshed de pagina om opnieuw te beginnen
 
-window.onload = function () {
+window.onload = function() {
     buildDeck();
     shuffleDeck();
     startGame();
 
-    document.getElementById("restart").addEventListener("click", function () {
-        location.reload();
+    document.getElementById("restart").addEventListener("click", function() {
+        location.reload(); 
     });
 }
 // start een timer van 5 minuten en geeft uit eindelijk een melding
 function startTimer() {
-    timer = setTimeout(function () {
+    timer = setTimeout(function() {
         alert("Bent u nog steeds aan het spelen?");
     }, 5 * 60 * 1000); // 5 minuten in milliseconden
 }
@@ -58,7 +58,7 @@ function buildDeck() {
 
     for (let i = 0; i < soort.length; i++) {
         for (let j = 0; j < types.length; j++) {
-            deck.push(types[j] + "-" + soort[i]);
+            deck.push(types[j] + "-" + soort[i]); 
         }
     }
 }
@@ -130,7 +130,7 @@ function hit() {
     // Update de spelerScore en weergave
     aantal = reduceAce(aantal, aantalAce);
     document.getElementById("speler-aantal").innerText = aantal;
-
+    
     // Als de speler een Aas heeft en het totale aantal gelijk aan of minder dan 21 is, laat ze dan doorgaan met pakken
     if (aantalAce > 0 && aantal <= 21) {
         // Update de spelerAceAantal
@@ -195,7 +195,6 @@ function getValue(card) {
     }
     return parseInt(value);
 }
-
 // kijkt of je een ACE hebt
 function checkAce(card) {
     if (card[0] == "A") {
@@ -219,14 +218,17 @@ function endGame() {
     document.getElementById("hidden").src = "./cards/" + hidden + ".png";
 
     let message = "";
-    if (dealerAantal <= 21 || aantal > 21) {
+    if (aantal > 21 || (dealerAantal <= 21 && dealerAantal > aantal)) {
         message = "You Lose!";
+        playSoundLose();
+    } else if (dealerAantal > 21 || aantal > dealerAantal) {
+        message = "You Win!";
+        playSoundWin();
     } else {
-        message = "Both players busted!";
+        message = "It's a tie!";
     }
 
     document.getElementById("dealer-aantal").innerText = dealerAantal;
     document.getElementById("speler-aantal").innerText = aantal;
     document.getElementById("results").innerText = message;
-    gameStarted = false;
 }
